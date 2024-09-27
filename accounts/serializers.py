@@ -232,15 +232,19 @@ class GoogleSiginSerializer(serializers.Serializer):
 
         google_user_data = Google.validate(access_token)
         
-        user_data = Google.validate(access_token)
+        
+        
+        
         try:
-            user_data['sub']
-        except:
+            google_user_data['sub']
+            
+             
+        except :
             raise serializers.ValidationError(
                 'The token is invalid or expired. Please login again.'
             )
        
-        if user_data['aud'] != settings.GOOGLE_CLIENT_ID:
+        if google_user_data['aud'] != settings.GOOGLE_CLIENT_ID:
 
             raise serializers.ValidationError('your are not google user')
 
@@ -415,7 +419,22 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
 
     
 
-
+class UserSigninSerailizer(serializers.ModelSerializer):
+    
+    
+    
+    
+    
+    class Meta:
+        
+        
+        model = MyUser
+        fields = ['email','first_name','last_name','auth_provider','role','auth_imahe']
+    
+    
+    
+    
+    
 
 
 
@@ -426,4 +445,6 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
 
             
          
+
+
 

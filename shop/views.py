@@ -3,14 +3,10 @@ from django.db.models import Prefetch
 
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.filters import OrderingFilter,SearchFilter
-
-
-
-from rest_framework import generics,status,renderers
+from rest_framework import generics,status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import action,authentication_classes,permission_classes
-from rest_framework.exceptions import NotFound
 
 
 from .models import (
@@ -23,7 +19,6 @@ from .models import (
     WishListItem,
     Product,
     ProductVariant,
-    ProductVariantImages,
     Size,
      
 )
@@ -55,7 +50,7 @@ from .filters import ProductFilterSet,ProductVariantFilterSet
 class LatestArrivalsListView(generics.ListAPIView):
     
     serializer_class = ProductSerilizer
-    queryset         = Product.objects.all().prefetch_related('categoery','brand',Prefetch('variants',queryset=ProductVariant.objects.select_related('color','size','img'))).filter(variants__isnull=False).distinct()[:4]
+    queryset         = Product.objects.fetch_all_with_variants()[:4]
     
     
 
@@ -292,8 +287,8 @@ class WishListItemReteriveDestroyAPIView(generics.RetrieveDestroyAPIView):
 class ListProductAPIView(generics.ListAPIView):
 
     serializer_class = ProductSerilizer
-    queryset         = Product.objects.all().prefetch_related('categoery','brand',Prefetch('variants',queryset=ProductVariant.objects.select_related('color','size','img'))).filter(variants__isnull=False).distinct()    
-    
+    queryset         = Product.objects.fetch_all_with_variants()
+ 
     """
     
     -> used django-filter backend to use custom filter class 
@@ -365,19 +360,39 @@ class SingleProductRetrivalAPIView(generics.GenericAPIView):
     def get(self,request,slug):
         
         
+        color          = request.query_params.get('color')
+        query_set_attr =  {'slug':slug }
+       
         try :
             
-            product = Product.objects.get(slug=slug)
             
             
+            
+            if color:
+                
+                query_set_attr['variant__color__name__iexact'] = color 
+            
+            product = Product.objects.get_with_variants(**query_set_attr)
+                
+                
+            
+    
         except Product.DoesNotExist:
             
             return Response({'product':'not found'},status=404)
         
         
+        
+        
+        
+        
+        
+        
         serializer = self.get_serializer_class()
         
         serializer = serializer(product,context={'request':request})
+        
+        
         
         return Response(serializer.data,status=status.HTTP_200_OK)
         

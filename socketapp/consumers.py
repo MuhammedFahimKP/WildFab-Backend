@@ -1,64 +1,21 @@
-import asyncio
-import random
-import string
+
 import json
 
-import datetime
-
-
-from urllib.parse import parse_qs
 
 from django.contrib.auth import get_user_model
 
+from asgiref.sync import async_to_sync,sync_to_async
 
-
-    
-    
-    
-
-
+from urllib.parse import parse_qs
 
 from channels.exceptions import DenyConnection
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 
-
-from asgiref.sync import async_to_sync,sync_to_async
-
-
-
-
-
 from shop.models import Cart,WishList
-
-
 from manager.utils import get_count_of_admin_data
 
 
-
-
-class NotificationConsumer(AsyncWebsocketConsumer):
-    
-    
-    
-    async def connect(self):
-        await self.accept()
-        await self.send_random_string()
-        
-        
-
-    async def disconnect(self, close_code):
-        pass
-
-    async def send_random_string(self):
-        
-        while True:
-
-            await self.send(text_data=json.dumps({
-             'word' : 'sdd'   
-            }))
-            
-            await asyncio.sleep(1)
 
 
 
@@ -356,14 +313,7 @@ class AdminDashBoardCountConsumer(BaseJWTAuthConsumer):
             
             
     async def send_notification_admin(self,event):
-        
-        print('notfication'),
-        print(event)
-        
-        data = await sync_to_async(get_count_of_admin_data)()
-        
-        print(data)
-        
+        data = await sync_to_async(get_count_of_admin_data)()     
         await self.send_message(data=data) 
         
          

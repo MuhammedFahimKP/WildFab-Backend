@@ -76,7 +76,6 @@ def get_count_wishlist_cart(user):
     
     return {
         'cart':cart_items,
-        
         'wishlist':wishlist_items,
     }    
         

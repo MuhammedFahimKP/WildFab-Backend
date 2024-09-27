@@ -8,6 +8,7 @@ from BaseModels.models import BaseModel
 from accounts.models import MyUser
 
 
+from .managers import ProductMangers
 
 
 
@@ -68,6 +69,7 @@ class Size(BaseModel):
     
     name      = models.CharField(max_length=200,unique=True)
     is_active = models.BooleanField(default=False)
+    
 
 
     def __str__(self) -> str:
@@ -88,7 +90,10 @@ class Product(BaseModel):
     img         = models.ImageField(upload_to='product/',blank=True,null=True)
     brand       = models.ForeignKey(Brand,on_delete=models.CASCADE)
     discription = models.TextField(max_length=500,null=True)
-    is_active   = models.BooleanField(default=False) 
+    is_active   = models.BooleanField(default=False)
+    
+    
+    objects     = ProductMangers()  
     
 
 
@@ -132,7 +137,7 @@ class ProductVariant(BaseModel):
 
     variant_id      = models.CharField(max_length=500,unique=True,null=True)
     slug            = models.SlugField(max_length=400,unique=True,null=True)
-    product         = models.ForeignKey(Product,related_name="variants",on_delete=models.CASCADE)
+    product         = models.ForeignKey('Product',related_name="variants",on_delete=models.CASCADE)
     img             = models.ForeignKey(ProductVariantImages,related_name='product',on_delete=models.CASCADE,default=None)
     color           = models.ForeignKey(Color,on_delete=models.CASCADE,null=True)
     size            = models.ForeignKey(Size,null=True,on_delete=models.CASCADE)

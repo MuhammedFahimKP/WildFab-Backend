@@ -631,7 +631,7 @@ class SingleProductVariantSerailer(serializers.ModelSerializer):
 class SingleProductSerializer(serializers.ModelSerializer):
     
     colors   = serializers.SerializerMethodField()
-    variants = serializers.SerializerMethodField()
+    variants = SingleProductVariantSerailer(many=True)
     
     brand     = serializers.SerializerMethodField()
     categoery = serializers.SerializerMethodField()
@@ -644,42 +644,28 @@ class SingleProductSerializer(serializers.ModelSerializer):
         return obj.brand.name
     
     
-
+    
+    
+    
+    
+    
+    
+    
     def get_colors(self,obj):
         
-        colors = ProductVariant.objects.filter(product=obj.id).values_list('color__name' ,flat=True).distinct()
+        colors = set()
+        
+        
+        for variant in obj.variants.all():
+            
+            colors.add(variant.color.name)
+            
+        
         
         return colors
-
     
-    def get_variants(self,obj):
-        
     
-        request:Request = self.context.get('request')
-        
-        color   = request.query_params.get('color')
-        
-        variants = []
-        
-        if color:
-           color =  Color.objects.filter(name__icontains=color)
-           color = color.first()
-           
-           variants = ProductVariant.objects.filter(color=color,product=obj.id)
-           
-           
-        else:    
-            firstproduct = ProductVariant.objects.filter(product=obj.id)
-            
-            if firstproduct.exists():
-                firstproduct = firstproduct.first()
-                variants     = ProductVariant.objects.filter(color=firstproduct.color,product=obj.id)
-           
-           
-            
-        data = SingleProductVariantSerailer(variants,many=True,context=self.context).data     
-        
-        return data
+    
         
         
         

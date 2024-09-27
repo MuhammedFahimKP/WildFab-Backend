@@ -375,14 +375,17 @@ class ShippingAddressListCreateApiView(JWTPermission,generics.GenericAPIView):
 class ShippingAddressDeleteUpdateRetrieveApiView(JWTPermission,generics.RetrieveUpdateDestroyAPIView):
     
     
-    
+
     serializer_class = ShippingAddressSerializer
     queryset         = ShippingAddress.objects.all()
     lookup_field     = 'pk'
     
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+    
 
-from django.template.loader import get_template    
-from django.contrib.sites.shortcuts import get_current_site
+    
+    
 class HaiAPIview(generics.GenericAPIView):
     
     def get(self,request):

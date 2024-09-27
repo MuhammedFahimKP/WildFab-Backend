@@ -511,6 +511,43 @@ class AdminUserViewSet(JWTPermission,viewsets.ModelViewSet):
     
     ordering_fields    = ['date_joined','-date_joined','last_login' , '-last_login' , 'auth_provider' , '-auth_provider', '-is_active' , '-is_active' ]
     
+    
+    
+    
+    @action(methods=['patch'],detail=True)
+    def user_block_or_activate(self,request):
+        
+        user = self.get_object()
+        
+        
+        
+        
+        if user.is_active == True :
+            user.is_active = False
+            user.save()
+        
+       
+            
+        elif user.is_active == False:
+            user.is_active = False 
+            user.save()
+            
+                    
+            
+        
+        else:
+            
+
+            
+            return Response({'is_active':f"user is already {  'active'  if user.is_active == True else 'blocked' }"},status=status.HTTP_409_CONFLICT)
+        
+        
+        return Response({'is_active':f'user {user.is_active}'},status=status.HTTP_409_CONFLICT)    
+               
+        
+        
+        
+    
 
 
 class AdminProductVariantViewSet(JWTPermission,viewsets.ModelViewSet):
