@@ -1,10 +1,7 @@
-import time
+
 from django.contrib.auth import get_user_model
 
-
 from django.db.models import Q
-
-
 
 
 from rest_framework.views import APIView
@@ -19,6 +16,7 @@ from rest_framework.pagination import LimitOffsetPagination
 from shop.models import Brand,Product,ProductVariantImages,ProductVariant
 
 from checkouts.models import Order
+from checkouts.utils import get_order_count_for_dashboard
 
 from .serializers import (
     
@@ -30,7 +28,11 @@ from .serializers import (
     AdminOrderListSerailizer,
     
 )
-from .utils import is_valid_uuid
+
+
+
+
+
 
 
 
@@ -70,7 +72,7 @@ class GetSingleProductVariatonImages(generics.GenericAPIView):
         
         
          
-        pk         = is_valid_uuid(pk)     
+            
         serializer = self.get_serializer_class()
         data       = self.get_queryset().filter(id=pk)
         
@@ -101,7 +103,7 @@ class GetPerticualerSizesOfColor(generics.GenericAPIView):
     
     def get(slef,request,pk=None):
         
-        pk            = is_valid_uuid(pk)
+        
         product_color = ProductVariantImages.objects.filter(id=pk) 
         
         if len(product_color) == 0:
@@ -123,7 +125,7 @@ class GetPerticualerSizesOfColor(generics.GenericAPIView):
     
     def patch(self,request,pk=None):
         
-        pk       = is_valid_uuid(pk)
+        
         instance = self.get_queryset().filter(id=pk)
         
         if len(instance) == 0 :
@@ -146,7 +148,7 @@ class GetPerticualerSizesOfColor(generics.GenericAPIView):
     
     def delete(self,request,pk=None):
         
-        pk       = is_valid_uuid(pk)
+        
         instance = self.get_queryset().filter(id=pk)
         instance = instance.first()
         instance.delete()
@@ -238,6 +240,14 @@ class AdminGetCountOfData(APIView):
                 
             
             },status=status.HTTP_200_OK) 
+        
+        
+        
+        
+class MonthlySalesView(APIView):
+    def get(self, request, year, month):
+        return Response(get_order_count_for_dashboard(year=year,month=month))
+        
 
 
         

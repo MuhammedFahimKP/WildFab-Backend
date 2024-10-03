@@ -98,7 +98,7 @@ class ProductMangers(Manager):
                     'color',
                     'size',
                     'img',
-                ).filter(color__id=first_variant))
+                ).filter(color__id=first_variant.color.id))
             ).get(**product_query_attr)
             
             

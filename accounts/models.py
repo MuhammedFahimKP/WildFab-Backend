@@ -78,10 +78,16 @@ class MyUser(AbstractBaseUser,PermissionsMixin):
     auth_provider = models.CharField(max_length=6,default=AUTH_PROVIDERS.get('email'))
 
     is_logedin    = models.BooleanField(default=False) 
+    
+    
+    # blocked       = models.BooleanField(default=False) 
      
 
 
     objects = MyUserManger() 
+    
+    
+    
 
     """
        we are teling that model required fields and 

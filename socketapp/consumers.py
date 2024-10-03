@@ -1,14 +1,11 @@
 
 import json
 
-
 from django.contrib.auth import get_user_model
 
 from asgiref.sync import async_to_sync,sync_to_async
 
-from urllib.parse import parse_qs
 
-from channels.exceptions import DenyConnection
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 
@@ -33,6 +30,34 @@ class BaseJWTAuthConsumer(AsyncWebsocketConsumer):
         
         return super().connect()
     
+    
+    
+    async def authenticate(self):
+        
+        user_id =  self.scope.get('user',None)
+        
+        
+        if user_id is not None :
+            
+            user = await self.get_user(user_id=user_id)  
+            
+            
+            if  user not in [None , False] :
+                
+                return user 
+            
+            return False
+        
+        else :
+            return None
+    
+    
+    
+     
+        
+          
+        
+    
     async def disconnect(self, code,message=''):        
         return await self.close(code,reason=message)
     
@@ -42,7 +67,8 @@ class BaseJWTAuthConsumer(AsyncWebsocketConsumer):
     
     
     
-    
+    def auth_error_occured(self):    
+        return 'auth_error' in self.scope  
         
     
 
@@ -52,9 +78,33 @@ class BaseJWTAuthConsumer(AsyncWebsocketConsumer):
             
         try :
             user = USER.objects.get(id=user_id)
+            
+            if user.is_active == False:            
+                
+                
+                self.scope['auth_error'] = {
+                    'code':4001, 
+                    'reason':'Not A Verfied User', 
+                }               
+                
+                return False               
+            
+            
+              
+    
+            
             return user
         
+            
+                
+                
+        
         except USER.DoesNotExist :
+            
+            self.scope['auth_error'] = {
+                'code':4004,
+                'reason':'user not found',
+            }
             
             return None       
         
@@ -89,8 +139,27 @@ class BaseJWTAuthConsumer(AsyncWebsocketConsumer):
         await self.close()     
         
     
-    
 
+
+class BaseJWTAdminAuthConsumer(BaseJWTAuthConsumer):
+    
+    
+    async def get_user(self,user_id):
+        user = await super().get_user(user_id)
+        
+        if user is not None or user != False:
+            
+            if user.is_staff == False  or user.is_superuser  == False :
+                
+                self.scope['auth_error'] = {
+                    'code':4001, 
+                    'reason':'Wrong User Type Excpted An Admin User', 
+                }               
+                
+                return False 
+            
+    
+        return user     
 
             
 class GetCartAndWishlistCountConsumer(BaseJWTAuthConsumer) :
@@ -103,20 +172,16 @@ class GetCartAndWishlistCountConsumer(BaseJWTAuthConsumer) :
     
     
     
+    
+    
+    
+    
+    
     async def connect(self):
         
         
         await self.accept()
-        
-        
-        if self.is_error_exists() :
-            
-           await self.send_message(self.scope['error'])
-           await self.close()
-           
-           
-        else :
-            await self.get_count() 
+        await self.get_count() 
                
         
     
@@ -168,55 +233,14 @@ class GetCartAndWishlistCountConsumer(BaseJWTAuthConsumer) :
         
     
     
-    
-    
-    
     async def get_count(self):
     
-        user =  self.scope.get('user',None)
+        user =  self.scope['user']
+        
+        data = await self.get_whislist_cartcount(user)
         
         
-        if user is not None:
-            
-            user =  await self.get_user(user)
-            
-            if user.is_active == False:
-                
-                await self.disconnect(code=4001,reason='not verified user')
-                
-                
-                
-                
-            
-            
-            if user is not None :
-                
-                self.user_loged = True
-                
-                
-                
-                
-                self.group_name = f"{user.id}s_cart_wishlist"
-                
-                await self.channel_layer.group_add(
-                    self.group_name,
-                    self.channel_name
-                )
-                
-            
-                
-                data = await self.get_whislist_cartcount(user)
-                await self.send_message(data)
-                    
-                
-            else :
-                
-                await self.disconnect(code=4004,reason='user not found')   
-        else :
-            
-            await self.disconnect(code=4001,reason='no user')    
-    
-    
+        await self.send_message(data=data) 
     
     
       
@@ -249,6 +273,8 @@ class AdminDashBoardCountConsumer(BaseJWTAuthConsumer):
             
            await self.send_message(self.scope['error'])
            await self.close()
+        
+        
            
            
         else :
@@ -271,7 +297,7 @@ class AdminDashBoardCountConsumer(BaseJWTAuthConsumer):
             
             
             
-            if user is not None :
+            if user is not None:
                 
                 
                 if user.is_active == False:
@@ -319,7 +345,87 @@ class AdminDashBoardCountConsumer(BaseJWTAuthConsumer):
          
                 
                 
+# class AdminDashBoardSalesData(BaseJWTAuthConsumer):
+    
+    
+    
+    
+        
+            
+
+        
+    
+    
+#     async def connect(self):
+        
+#         await self.accept()
+        
+        
+#         if self.is_error_exists() :
+            
+#            await self.send_message(self.scope['error'])
+#            await self.close()
+           
+           
+#         else :
+#             await self.get_count()
+            
+            
+    
+#     async def get_count(self):
+        
+        
+#         user = self.scope.get('user',None)
+        
+        
+#         if user is not None :
+            
+#             user = await self.get_user(user)
+            
+            
+            
+            
+            
+            
+#             if user is not None :
                 
+                
+#                 if user.is_active == False:
+                    
+#                     await self.disconnect(code=4001,reason='not a verfied user')
+                
+#                 if user.is_superuser and  user.is_staff:
+                    
+#                     self.user_loged = True
+                    
+#                     self.group_name = 'admins_dashboard_count'
+                    
+                    
+#                     await self.channel_layer.group_add(
+#                         self.group_name,
+#                         self.channel_name
+#                     )
+                    
+#                     data = await sync_to_async(get_count_of_admin_data)()
+                    
+                    
+                
+                    
+                    
+#                     await self.send_message(data)
+                    
+                
+                
+#                 else :    
+#                     await self.disconnect(code=4001,reason='unauthoride only admin users have access')  
+                    
+#             else :
+#                 await self.disconnect(code=4004,reason='user not found')        
+                    
+#         else:
+            
+#             await self.disconnect(code=4001,reason='no user')    
+                     
             
                 
                 
